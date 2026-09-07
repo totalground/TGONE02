@@ -148,15 +148,17 @@ DROP TABLE IF EXISTS `dispositivo`;
 
 CREATE TABLE `dispositivo` (
 	id INT AUTO_INCREMENT PRIMARY KEY,
-	`Nombre` char(30)  not NULL,
-	`Descripcion` char(255) default NULL,
+	`nombre` char(30)  not NULL,
+	`descripcion` char(255) default NULL,
     
-    `Organizacion` INT default NULL,
-	`Owner` INT default NULL,
-	`TipoDispositivo` INT default NULL,
+    `sn` char(30)  not NULL,
+    `beatle` char(30)  not NULL,
+    `organizacion` INT default NULL,
+	`owner` INT default NULL,
+	`tipoDispositivo` INT default NULL,
     
-	`LecturaTablaID` INT default NULL,
-	`LecturaTablaNAme` char(30) default NULL,		-- Redundante para hacer mas rapido  
+	`lecturaTablaID` INT default NULL,
+	`lecturaTablaName` char(30) default NULL,		-- Redundante para hacer mas rapido  
     
     `Status` char(10) default NULL
     
@@ -208,10 +210,11 @@ CREATE TABLE `dispositivovariable` (
 	`Abreviatura` char(10)  DEFAULT NULL,
     `minimo` decimal(11,2) default NULL,
     `max` decimal(11,2) default NULL,
-    `yellow_01` decimal(11,2) default NULL,
-    `yellow_02` decimal(11,2) default NULL,
-    `red_01` decimal(11,2) default NULL,
-    `red_02` decimal(11,2) default NULL
+    
+    `redTop` decimal(11,2) default NULL,
+    `yellowTop` decimal(11,2) default NULL,
+    `yellowBottom` decimal(11,2) default NULL,
+    `redBottom` decimal(11,2) default NULL
 
 ) ENGINE=InnoDB ;
 
