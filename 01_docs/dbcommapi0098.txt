@@ -1,0 +1,884 @@
+/*
+Prompt solicitado al chatGPT
+
+#Rol:  responde como: 
+#Accion:  documenta  PHP
+#Formato:  texto plano dentro del codigo
+#Antecedentes: es un API que en la funcion post recibe una directiva,
+con base en la directiva, ejecuta, get, post, put, delete y un get especial para paginacion 
+
+
+#PHP:
+
+<?php                       Se PEGO el codigo php del servicio
+
+*/
+
+/*
+
+La API REST dinámica está construida en PHP con PDO para conectarse a MySQL. Su característica principal es que, aunque admite métodos HTTP tradicionales, el flujo principal está concentrado en una solicitud HTTP POST que recibe una directiva mediante el parámetro action. Dependiendo de su valor, la API ejecuta una consulta, inserción, actualización, eliminación o conteo especial para paginación.
+
+DOCUMENTACIÓN DE LA API REST DINÁMICA
+PHP + MySQL
+
+1. DESCRIPCIÓN GENERAL
+
+Esta API permite realizar operaciones dinámicas sobre una base de datos MySQL mediante PHP y PDO.
+
+El flujo principal de operación utiliza una solicitud HTTP POST que recibe un objeto JSON. Dentro de este JSON, el parámetro "action" funciona como directiva para determinar la operación que debe ejecutarse.
+
+Directivas disponibles:
+
+    action = "get"        Consulta registros.
+    action = "post"       Inserta un nuevo registro.
+    action = "put"        Actualiza uno o varios registros.
+    action = "delete"     Elimina uno o varios registros.
+    action = "getcuenta"  Obtiene el total de registros para control de paginación.
+
+La API genera dinámicamente las consultas SQL utilizando los parámetros recibidos en formato JSON.
+
+
+============================================================
+2. PARÁMETROS GENERALES
+============================================================
+
+Los siguientes parámetros forman parte de la configuración general de las solicitudes:
+
+servidor
+    Dirección o nombre del servidor MySQL.
+
+base_de_datos
+    Nombre de la base de datos.
+
+usuario
+    Usuario utilizado para establecer la conexión MySQL.
+
+password
+    Contraseña del usuario de MySQL.
+
+tabla
+    Tabla sobre la cual se realizará la operación.
+
+action
+    Directiva que determina la operación que ejecutará la API.
+
+token
+    Token recibido por la API como parte de los parámetros obligatorios.
+
+Ejemplo:
+
+{
+    "servidor": "localhost",
+    "base_de_datos": "tgv_dev",
+    "usuario": "root",
+    "password": "root",
+    "tabla": "prueba",
+    "action": "get",
+    "token": "TOKEN"
+}
+
+
+============================================================
+3. PARÁMETROS OPCIONALES Y DE OPERACIÓN
+============================================================
+
+campos
+    Objeto que contiene las parejas campo/valor utilizadas para
+    insertar o actualizar información.
+
+Ejemplo:
+
+"campos": {
+    "Nombre": "Laura",
+    "Descripcion": "Ejemplo",
+    "Status": "6"
+}
+
+
+condiciones
+    Objeto que contiene los criterios utilizados en las cláusulas
+    WHERE.
+
+    Cuando existen varias condiciones, se unen mediante AND.
+
+Ejemplo:
+
+"condiciones": {
+    "nombre": "11",
+    "descripcion": "6",
+    "id": 2
+}
+
+Genera conceptualmente:
+
+WHERE nombre = '11'
+  AND descripcion = '6'
+  AND id = 2
+
+
+displayfields
+    Arreglo que indica los campos que deben devolverse en una
+    consulta GET.
+
+Ejemplo:
+
+"displayfields": [
+    "id",
+    "Nombre",
+    "descripcion"
+]
+
+Si no se especifica "displayfields", la API utiliza "*" y devuelve
+todos los campos.
+
+
+limite
+    Número máximo de registros que debe devolver una consulta.
+
+Ejemplo:
+
+"limite": 10
+
+
+offset
+    Número de registros que deben omitirse antes de comenzar a
+    devolver resultados.
+
+    Se utiliza junto con "limite" principalmente para paginación.
+
+Ejemplo:
+
+"limite": 10,
+"offset": 20
+
+
+============================================================
+4. DIRECTIVA GET
+============================================================
+
+La directiva:
+
+    "action": "get"
+
+ejecuta la función:
+
+    callget()
+
+Su objetivo es consultar registros de la tabla indicada.
+
+La consulta base generada es:
+
+SELECT campos
+FROM tabla
+
+Si no se proporciona "displayfields":
+
+SELECT *
+FROM tabla
+
+Si se proporcionan condiciones:
+
+SELECT campos
+FROM tabla
+WHERE condicion1
+  AND condicion2
+  ...
+
+También admite LIMIT y OFFSET.
+
+
+Ejemplo de solicitud:
+
+{
+    "servidor": "localhost",
+    "base_de_datos": "tgv_dev",
+    "usuario": "root",
+    "password": "root",
+    "action": "get",
+    "token": "TOKEN",
+    "tabla": "prueba",
+
+    "condiciones": {
+        "nombre": "11",
+        "descripcion": "6",
+        "id": 2
+    },
+
+    "limite": 10,
+    "offset": 0,
+
+    "displayfields": [
+        "id",
+        "Nombre",
+        "descripcion"
+    ]
+}
+
+
+Operación SQL equivalente:
+
+SELECT id, Nombre, descripcion
+FROM prueba
+WHERE nombre = :where_nombre
+  AND descripcion = :where_descripcion
+  AND id = :where_id
+LIMIT 10
+OFFSET 0
+
+
+La consulta utiliza parámetros preparados mediante PDO.
+
+
+============================================================
+5. DIRECTIVA GETCUENTA
+============================================================
+
+La directiva:
+
+    "action": "getcuenta"
+
+ejecuta:
+
+    callgetcuenta()
+
+Esta operación está diseñada específicamente para apoyar el control
+de paginación.
+
+A diferencia de "get", no devuelve los registros de la consulta.
+Obtiene el número total de registros que cumplen las condiciones.
+
+La consulta generada es:
+
+SELECT count(*) AS syscuentaregistros
+FROM tabla
+
+Si existen condiciones:
+
+SELECT count(*) AS syscuentaregistros
+FROM tabla
+WHERE condicion1
+  AND condicion2
+  ...
+
+
+Ejemplo:
+
+{
+    "servidor": "localhost",
+    "base_de_datos": "tgv_dev",
+    "usuario": "root",
+    "password": "root",
+    "action": "getcuenta",
+    "token": "TOKEN",
+    "tabla": "prueba",
+
+    "condiciones": {
+        "Status": "6"
+    }
+}
+
+
+La operación permite conocer cuántos registros existen antes de
+calcular las páginas que serán solicitadas mediante "get".
+
+Los parámetros:
+
+    limite
+    offset
+    displayfields
+
+no intervienen en el conteo.
+
+
+============================================================
+6. PAGINACIÓN
+============================================================
+
+La paginación se implementa combinando dos operaciones:
+
+    getcuenta
+    get
+
+Primero se utiliza "getcuenta" para conocer el número total de
+registros.
+
+Después se utiliza "get" indicando:
+
+    limite
+    offset
+
+
+Ejemplo:
+
+Si existen 100 registros y se desean mostrar 10 registros por página:
+
+Página 1:
+
+    limite = 10
+    offset = 0
+
+Página 2:
+
+    limite = 10
+    offset = 10
+
+Página 3:
+
+    limite = 10
+    offset = 20
+
+Página N:
+
+    offset = (pagina - 1) * limite
+
+
+Ejemplo:
+
+{
+    "action": "get",
+    "limite": 10,
+    "offset": 20
+}
+
+correspondería a la tercera página cuando cada página contiene
+10 registros.
+
+
+============================================================
+7. DIRECTIVA POST
+============================================================
+
+La directiva:
+
+    "action": "post"
+
+ejecuta:
+
+    callpost()
+
+Su objetivo es insertar un nuevo registro.
+
+Requiere obligatoriamente:
+
+    campos
+
+
+Ejemplo:
+
+{
+    "servidor": "localhost",
+    "base_de_datos": "tgv_dev",
+    "usuario": "root",
+    "password": "root",
+    "action": "post",
+    "token": "TOKEN",
+    "tabla": "usuario",
+
+    "campos": {
+        "usuario": "Laura",
+        "password": "laura@example.com"
+    }
+}
+
+
+La API genera dinámicamente:
+
+INSERT INTO usuario
+(usuario, password)
+VALUES
+(:usuario, :password)
+
+
+Después de realizar la inserción devuelve el identificador generado
+por MySQL mediante:
+
+    lastInsertId()
+
+
+Respuesta esperada:
+
+{
+    "estado": "éxito",
+    "codigo": 201,
+    "mensaje": "Registro insertado correctamente.",
+    "datos": {
+        "id_insertado": "29"
+    }
+}
+
+
+============================================================
+8. DIRECTIVA PUT
+============================================================
+
+La directiva:
+
+    "action": "put"
+
+ejecuta:
+
+    callput()
+
+Permite actualizar uno o varios registros.
+
+Requiere:
+
+    campos
+    condiciones
+
+
+"campos" contiene los nuevos valores.
+
+"condiciones" identifica los registros que deben actualizarse.
+
+
+Ejemplo:
+
+{
+    "servidor": "localhost",
+    "base_de_datos": "tgv_dev",
+    "usuario": "root",
+    "password": "root",
+    "action": "put",
+    "token": "TOKEN",
+    "tabla": "usuario",
+
+    "condiciones": {
+        "id": 3
+    },
+
+    "campos": {
+        "usuario": "Laura",
+        "password": "laura@example.com"
+    }
+}
+
+
+Consulta equivalente:
+
+UPDATE usuario
+SET usuario = :set_usuario,
+    password = :set_password
+WHERE id = :where_id
+
+
+La respuesta incluye:
+
+    filas_afectadas
+
+que indica el número de registros modificados.
+
+
+============================================================
+9. DIRECTIVA DELETE
+============================================================
+
+La directiva:
+
+    "action": "delete"
+
+ejecuta:
+
+    calldelete()
+
+Permite eliminar uno o varios registros.
+
+El parámetro:
+
+    condiciones
+
+es obligatorio.
+
+Esto evita que se genere una eliminación sin una cláusula WHERE.
+
+
+Ejemplo:
+
+{
+    "servidor": "localhost",
+    "base_de_datos": "tgv_dev",
+    "usuario": "root",
+    "password": "root",
+    "action": "delete",
+    "token": "TOKEN",
+    "tabla": "usuario",
+
+    "condiciones": {
+        "id": 8
+    }
+}
+
+
+Consulta equivalente:
+
+DELETE FROM usuario
+WHERE id = :where_id
+
+
+La respuesta devuelve:
+
+    filas_afectadas
+
+con el número de registros eliminados.
+
+
+============================================================
+10. FORMATO GENERAL DE RESPUESTA
+============================================================
+
+Las respuestas son generadas mediante:
+
+    responder()
+
+La estructura utilizada es:
+
+[
+    {
+        "estado": "...",
+        "codigo": 200,
+        "mensaje": "...",
+        "datos": ...
+    }
+]
+
+
+"datos" solamente se incluye cuando existe información adicional
+que devolver.
+
+
+Principales códigos HTTP utilizados:
+
+200
+    Operación realizada correctamente.
+
+201
+    Registro creado correctamente.
+
+400
+    Error en los parámetros o JSON recibido.
+
+405
+    Método HTTP no soportado.
+
+500
+    Error al ejecutar una operación SQL.
+
+503
+    Error al establecer conexión con MySQL.
+
+
+============================================================
+11. VALIDACIÓN DEL JSON
+============================================================
+
+La función:
+
+    obtenerCuerpo()
+
+lee el cuerpo HTTP mediante:
+
+    php://input
+
+Posteriormente convierte el JSON en un arreglo PHP mediante:
+
+    json_decode()
+
+Si el cuerpo está vacío o el JSON es inválido, se devuelve un
+error HTTP 400.
+
+
+============================================================
+12. VALIDACIÓN DE PARÁMETROS GENERALES
+============================================================
+
+La función:
+
+    validarConexion()
+
+comprueba la existencia de:
+
+    servidor
+    base_de_datos
+    usuario
+    password
+    tabla
+    action
+    token
+
+Si alguno está vacío, la API devuelve un error HTTP 400.
+
+
+============================================================
+13. CONEXIÓN A MYSQL
+============================================================
+
+La función:
+
+    crearConexion()
+
+crea una conexión PDO utilizando:
+
+mysql:host=SERVIDOR;
+dbname=BASE_DE_DATOS;
+charset=utf8mb4
+
+
+La conexión utiliza:
+
+PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+
+para convertir los errores SQL en excepciones.
+
+También utiliza:
+
+PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+
+para devolver los registros como arreglos asociativos.
+
+El tiempo máximo configurado para la conexión es de 5 segundos.
+
+
+============================================================
+14. SEGURIDAD DE NOMBRES DE TABLAS Y CAMPOS
+============================================================
+
+La función:
+
+    sanitizarNombre()
+
+valida dinámicamente los nombres utilizados para tablas y campos.
+
+Únicamente permite:
+
+    letras
+    números
+    guion bajo (_)
+
+Expresión utilizada:
+
+^[a-zA-Z0-9_]+$
+
+Esto evita que nombres arbitrarios sean incorporados directamente
+en la estructura de las consultas SQL.
+
+
+Los valores utilizados en:
+
+    campos
+    condiciones
+
+se envían mediante parámetros preparados de PDO.
+
+
+============================================================
+15. ENRUTAMIENTO PRINCIPAL
+============================================================
+
+La API obtiene inicialmente el método HTTP mediante:
+
+    $_SERVER['REQUEST_METHOD']
+
+
+Cuando recibe POST, obtiene:
+
+    action
+    token
+
+y utiliza "action" como directiva.
+
+
+Mapa de operaciones:
+
+    get
+        -> callget()
+
+    post
+        -> callpost()
+
+    put
+        -> callput()
+
+    delete
+        -> calldelete()
+
+    getcuenta
+        -> callgetcuenta()
+
+
+Por lo tanto, una misma URL puede centralizar las operaciones CRUD
+y la operación especial de conteo.
+
+
+============================================================
+16. MÉTODOS HTTP DIRECTOS
+============================================================
+
+Además del sistema basado en POST + action, el código conserva
+soporte directo para:
+
+GET
+    Ejecuta callget().
+
+PUT
+    Ejecuta callput().
+
+DELETE
+    Ejecuta calldelete().
+
+POST
+    Utiliza el valor de "action" para decidir qué función ejecutar.
+
+
+============================================================
+17. CORS
+============================================================
+
+La API configura los siguientes encabezados:
+
+Content-Type:
+    application/json; charset=UTF-8
+
+Access-Control-Allow-Origin:
+    *
+
+Access-Control-Allow-Methods:
+    GET, POST, PUT, DELETE, OPTIONS
+
+Access-Control-Allow-Headers:
+    Content-Type
+
+
+También procesa solicitudes OPTIONS utilizadas como preflight CORS.
+
+Cuando recibe OPTIONS:
+
+    responde con HTTP 200
+    finaliza inmediatamente la ejecución
+
+
+============================================================
+18. FLUJO GENERAL DE UNA SOLICITUD POST
+============================================================
+
+CLIENTE
+   |
+   | JSON
+   v
+API PHP
+   |
+   +--> obtenerCuerpo()
+   |
+   +--> obtiene "action"
+   |
+   +--> selecciona operación
+          |
+          +--> get
+          |      |
+          |      +--> callget()
+          |
+          +--> getcuenta
+          |      |
+          |      +--> callgetcuenta()
+          |
+          +--> post
+          |      |
+          |      +--> callpost()
+          |
+          +--> put
+          |      |
+          |      +--> callput()
+          |
+          +--> delete
+                 |
+                 +--> calldelete()
+
+Cada función:
+
+    1. Obtiene el JSON.
+    2. Valida los parámetros.
+    3. Crea la conexión PDO.
+    4. Sanitiza tabla y campos.
+    5. Construye la consulta SQL.
+    6. Prepara la consulta.
+    7. Ejecuta los parámetros.
+    8. Devuelve el resultado en JSON.
+
+
+============================================================
+19. RESUMEN DE DIRECTIVAS
+============================================================
+
+DIRECTIVA     FUNCIÓN           OPERACIÓN
+
+get           callget()         SELECT
+getcuenta     callgetcuenta()   SELECT COUNT(*)
+post          callpost()        INSERT
+put           callput()         UPDATE
+delete        calldelete()      DELETE
+
+
+============================================================
+20. OBSERVACIONES DEL CÓDIGO ACTUAL
+============================================================
+
+1. El parámetro "token" es obligatorio en validarConexion(), pero
+   en el código mostrado solamente se obtiene su valor; no existe
+   una función que valide si el token recibido es correcto.
+
+2. En calldelete() el mensaje utiliza:
+
+       $afectados
+
+   pero esa variable no se define previamente.
+
+   Sin embargo, para el campo "filas_afectadas" sí se utiliza
+   correctamente:
+
+       $stmt->rowCount()
+
+3. En el case POST se llama primero a:
+
+       obtenerCuerpo()
+
+   para obtener "action".
+
+   Después, la función seleccionada vuelve a ejecutar
+   obtenerCuerpo().
+
+   Por lo tanto, el cuerpo JSON es procesado dos veces.
+
+4. Después del switch interno de "action" no existe un break
+   explícito para finalizar el case POST del switch principal.
+
+   Debido a que responder() ejecuta exit(), las operaciones normales
+   terminan la ejecución desde esa función. Sin embargo, el flujo
+   depende de ese comportamiento.
+
+5. La función callgetcuenta() ejecuta COUNT(*) correctamente para
+   conocer el total de registros, pero posteriormente utiliza
+   fetchAll() y count($registros).
+
+   count($registros) normalmente representa el número de filas
+   devueltas por SELECT COUNT(*), no el valor real del conteo.
+
+   El valor real del total se encuentra en:
+
+       syscuentaregistros
+
+6. El mensaje de acción no soportada indica:
+
+       get, post, put o delete
+
+   aunque también existe la directiva:
+
+       getcuenta
+
+7. El código permite enviar credenciales de conexión MySQL dentro
+   de cada solicitud JSON. Esto forma parte del diseño actual de la
+   API y debe considerarse especialmente al definir su esquema de
+   seguridad y su exposición en producción.
+
+La documentación anterior conserva el comportamiento que realmente aparece en el código, incluyendo la arquitectura POST + action, el getcuenta para paginación y las observaciones donde la implementación actual presenta inconsistencias; no he asumido funcionalidades que no estén implementadas en el archivo.
+
+*/
+
