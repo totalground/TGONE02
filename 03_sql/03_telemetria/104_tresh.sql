@@ -1,4 +1,4 @@
-use tgv_dev;
+use tgv_qa;
 
 SET FOREIGN_KEY_CHECKS=0;
 
@@ -25,11 +25,6 @@ CREATE TABLE `variable` (
 ) ENGINE=InnoDB ;
 
 select * from variable;
-
-insert into variable (nombre,descripcion , abreviatura) values ('Voltaje','Voltaje','V');
-insert into variable (nombre,descripcion , abreviatura) values ('Frecuencia','Frecuencia','Hz');
-
-insert into variable (nombre,descripcion , abreviatura) values ('Descargas','Ground Fault Detection','GFD');
 
 
 /*
@@ -69,10 +64,6 @@ CREATE TABLE `tipodispositivo` (
 	`descripcion` char(255) default NULL
 ) ENGINE=InnoDB ;
 
-insert into tipodispositivo (nombre,descripcion ) values ('TOV  a 2','TOV reducido a 2');
-insert into tipodispositivo (nombre,descripcion ) values ('C Descargas','Contador de decargas');
-
-
 select * from tipodispositivo;
 
 /*
@@ -108,19 +99,6 @@ CREATE TABLE `tipodispositivovariable` (
     `orden` INT NOT NULL
     -- min, max, yellow_01, yellow_02, red_01, red_02
 ) ENGINE=InnoDB ;
-
-/*
-select * from tipoDispositivo;
-Select * from variable;
-*/
-
-insert into tipodispositivovariable (tipoDispositivo,variable,orden ) values (1,1,1);
-insert into tipodispositivovariable (tipoDispositivo,variable,orden ) values (1,3,2);
-
-insert into tipodispositivovariable (tipoDispositivo,variable,orden ) values (2,2,1);
-
-select * from tipodispositivovariable;
-
 /*
 
 {
@@ -175,7 +153,7 @@ CREATE TABLE `dispositivo` (
 	`descripcion` char(255) default NULL,
     
     `sn` char(30)  not NULL,
-    `beetle` char(30)  not NULL,
+    `beatle` char(30)  not NULL,
     `organizacion` INT default NULL,
 	`owner` INT default NULL,
 	`tipoDispositivo` INT default NULL,
@@ -186,23 +164,6 @@ CREATE TABLE `dispositivo` (
     `Status` char(10) default NULL
     
 ) ENGINE=InnoDB ;
-
-select * from dispositivo;
-
-insert into dispositivo (`nombre`,`descripcion`,`sn`,`beetle`,`organizacion`,`owner`,`tipoDispositivo`,`lecturaTablaID` ,`lecturaTablaName` ,`Status`) 
-    values      ('TOV electronica','TOV electronica','SN 1234567','btABCDEF',1,1,1,1,'binread004',1);
-    
--- update dispositivo set lecturaTablaName = 'binread004'  ;  
-    
-select * from dispositivo;
-select * from tipodispositivovariable;
-select * from tipodispositivo;
-select * from variable;
-
-select * from dispositivo ds, tipodispositivo td, tipodispositivovariable tdv,   variable va 
-where  ds.tipoDispositivo = td.id   and tdv.tipoDispositivo = td.id and tdv.variable = va.id; 
-
-
 
 /*
 
@@ -255,10 +216,6 @@ CREATE TABLE `dispositivovariable` (
 	`dispositivo` INT NOT NULL,
 	`variable` INT NOT NULL,
 	`abreviatura` char(10)  DEFAULT NULL,
-    
-    `escala01` decimal(11,2) default NULL,
-    `escala02` decimal(11,2) default NULL,
-    
     `minimo` decimal(11,2) default NULL,
     `max` decimal(11,2) default NULL,
     
