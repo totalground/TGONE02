@@ -105,8 +105,21 @@ CREATE TABLE `tipodispositivovariable` (
 	id INT AUTO_INCREMENT PRIMARY KEY,
 	`tipoDispositivo` INT NOT NULL,
 	`variable` INT NOT NULL,
-    `orden` INT NOT NULL
-    -- min, max, yellow_01, yellow_02, red_01, red_02
+    `orden` INT NOT NULL,
+    
+    	`abreviatura` char(10)  DEFAULT NULL,
+        
+	`escala01` decimal(11,2) default NULL,
+    `escala02` decimal(11,2) default NULL,
+    
+    `minimo` decimal(11,2) default NULL,
+    `max` decimal(11,2) default NULL,
+    
+    `redTop` decimal(11,2) default NULL,
+    `yellowTop` decimal(11,2) default NULL,
+    `yellowBottom` decimal(11,2) default NULL,
+    `redBottom` decimal(11,2) default NULL
+
 ) ENGINE=InnoDB ;
 
 /*
@@ -114,12 +127,17 @@ select * from tipoDispositivo;
 Select * from variable;
 */
 
-insert into tipodispositivovariable (tipoDispositivo,variable,orden ) values (1,1,1);
-insert into tipodispositivovariable (tipoDispositivo,variable,orden ) values (1,3,2);
+insert into tipodispositivovariable (tipoDispositivo,variable,orden,abreviatura,escala01,escala02,minimo,max,redTop,yellowTop,yellowBottom,redBottom) 
+values (1,1,1,'v' ,5,20,0,150,130,115,110,100);
 
-insert into tipodispositivovariable (tipoDispositivo,variable,orden ) values (2,2,1);
+insert into tipodispositivovariable (tipoDispositivo,variable,orden,abreviatura,escala01,escala02,minimo,max,redTop,yellowTop,yellowBottom,redBottom) 
+values (1,2,2,'Hz' ,5,20,0,90,80,170,50,40);
+
+insert into tipodispositivovariable (tipoDispositivo,variable,orden,abreviatura,escala01,escala02,minimo,max,redTop,yellowTop,yellowBottom,redBottom) 
+values (2,3,1,'GFD' ,1,5,0,15,5,4,2,1);
 
 select * from tipodispositivovariable;
+select * from variable;
 
 /*
 
